@@ -1,0 +1,490 @@
+# =============================================================================
+# SIF Fingerprint Taxonomy  v0.1
+# =============================================================================
+# This file is the interface contract between:
+#   - Member 3 (extraction)  -> produces these IDs
+#   - Member 4 (patterns)    -> groups and matches on these IDs
+#   - Member 6 (dashboard)   -> filters and displays these labels
+#
+# RULES:
+#   1. `id` values are STABLE. Never rename an id. Add new ones; deprecate old
+#      ones with `deprecated: true`. Renaming breaks every stored record.
+#   2. `label` is for humans and may be edited freely.
+#   3. Every extracted field must map to an id in this file, or be null.
+#      Null is a valid, honest answer. Guessing is not.
+# =============================================================================
+
+version: "0.2"
+
+# -----------------------------------------------------------------------------
+# 1. IOGP LIFE-SAVING RULES  (the spine — required by the problem statement)
+# -----------------------------------------------------------------------------
+life_saving_rules:
+  - id: LSR_BYPASS
+    label: "Bypassing Safety Controls"
+    rule_text: "Obtain authorisation before overriding or disabling safety controls"
+  - id: LSR_CONFINED
+    label: "Confined Space"
+    rule_text: "Obtain authorisation before entering a confined space"
+  - id: LSR_DRIVING
+    label: "Driving"
+    rule_text: "Follow safe driving rules"
+  - id: LSR_ENERGY
+    label: "Energy Isolation"
+    rule_text: "Verify isolation and zero energy before work begins"
+  - id: LSR_HOTWORK
+    label: "Hot Work"
+    rule_text: "Control flammables and ignition sources"
+  - id: LSR_LINEOFFIRE
+    label: "Line of Fire"
+    rule_text: "Keep yourself and others out of the line of fire"
+  - id: LSR_LIFTING
+    label: "Safe Mechanical Lifting"
+    rule_text: "Plan lifting operations and control the area"
+  - id: LSR_WORKAUTH
+    label: "Work Authorisation"
+    rule_text: "Work with a valid permit when required"
+  - id: LSR_HEIGHT
+    label: "Working at Height"
+    rule_text: "Protect yourself against a fall when working at height"
+
+# -----------------------------------------------------------------------------
+# 2. BARRIER FAILURE MODE
+# -----------------------------------------------------------------------------
+# Grounded in the standard SIF-precursor definition: a precursor exists where
+# controls are "absent, ineffective, or not complied with".
+# A barrier is ALWAYS reported as (barrier_id + failure_mode_id).
+# -----------------------------------------------------------------------------
+failure_modes:
+  - id: FM_ABSENT
+    label: "Absent"
+    definition: "The control was never in place for this task."
+  - id: FM_INEFFECTIVE
+    label: "Ineffective"
+    definition: "The control existed but could not perform its function (damaged, wrong type, degraded, poorly designed)."
+  - id: FM_NOT_COMPLIED
+    label: "Not complied with"
+    definition: "The control existed and was serviceable, but was bypassed, skipped, or not verified."
+
+# -----------------------------------------------------------------------------
+# 3. BARRIER CATEGORIES  (cross-cutting — every barrier belongs to one)
+# -----------------------------------------------------------------------------
+barrier_categories:
+  - id: BC_ENGINEERING
+    label: "Engineering / hardware"
+    note: "Physical controls: guards, interlocks, isolation devices, relief systems."
+  - id: BC_PROCEDURAL
+    label: "Procedural"
+    note: "Permits, certificates, risk assessments, SOPs, checklists."
+  - id: BC_HUMAN
+    label: "Human / organisational"
+    note: "Supervision, competence, communication, verification, authorisation."
+  - id: BC_PPE
+    label: "PPE"
+    note: "Last line of defence. Personal protective equipment."
+
+# -----------------------------------------------------------------------------
+# 4. BARRIER CATALOG
+# -----------------------------------------------------------------------------
+# `applies_to` is ALWAYS present and is either:
+#     - a Life-Saving Rule id  -> barrier is specific to that rule
+#     - CROSS_CUTTING          -> barrier applies regardless of rule
+# There is no null here. Null would be ambiguous: it cannot be distinguished
+# from "we haven't decided yet". Every barrier states its scope explicitly.
+# -----------------------------------------------------------------------------
+barriers:
+
+  # --- Energy Isolation ---
+  - id: BAR_ISOLATION_APPLIED
+    label: "Energy isolation applied"
+    category: BC_ENGINEERING
+    applies_to: LSR_ENERGY
+  - id: BAR_ISOLATION_VERIFIED
+    label: "Isolation verified / zero-energy confirmed"
+    category: BC_HUMAN
+    applies_to: LSR_ENERGY
+  - id: BAR_LOCKOUT_TAGOUT
+    label: "Lockout-tagout in place"
+    category: BC_ENGINEERING
+    applies_to: LSR_ENERGY
+  - id: BAR_STORED_ENERGY_RELEASED
+    label: "Stored energy released / depressurised / drained"
+    category: BC_ENGINEERING
+    applies_to: LSR_ENERGY
+
+  # --- Work Authorisation ---
+  - id: BAR_PERMIT_VALID
+    label: "Valid work permit obtained"
+    category: BC_PROCEDURAL
+    applies_to: LSR_WORKAUTH
+  - id: BAR_JSA_COMPLETED
+    label: "Job safety analysis / risk assessment completed"
+    category: BC_PROCEDURAL
+    applies_to: LSR_WORKAUTH
+  - id: BAR_TOOLBOX_TALK
+    label: "Pre-job briefing / toolbox talk held"
+    category: BC_HUMAN
+    applies_to: LSR_WORKAUTH
+
+  # --- Confined Space ---
+  - id: BAR_GAS_TEST
+    label: "Atmosphere / gas test performed"
+    category: BC_PROCEDURAL
+    applies_to: LSR_CONFINED
+  - id: BAR_VENTILATION
+    label: "Ventilation / purging in place"
+    category: BC_ENGINEERING
+    applies_to: LSR_CONFINED
+  - id: BAR_STANDBY_ATTENDANT
+    label: "Standby attendant / hole watch present"
+    category: BC_HUMAN
+    applies_to: LSR_CONFINED
+  - id: BAR_RESCUE_PLAN
+    label: "Rescue plan and equipment available"
+    category: BC_PROCEDURAL
+    applies_to: LSR_CONFINED
+
+  # --- Hot Work ---
+  - id: BAR_HOTWORK_PERMIT
+    label: "Hot work permit obtained"
+    category: BC_PROCEDURAL
+    applies_to: LSR_HOTWORK
+  - id: BAR_FLAMMABLES_REMOVED
+    label: "Flammables removed or isolated from work area"
+    category: BC_ENGINEERING
+    applies_to: LSR_HOTWORK
+  - id: BAR_FIRE_WATCH
+    label: "Fire watch posted"
+    category: BC_HUMAN
+    applies_to: LSR_HOTWORK
+  - id: BAR_IGNITION_CONTROL
+    label: "Ignition sources controlled"
+    category: BC_ENGINEERING
+    applies_to: LSR_HOTWORK
+
+  # --- Working at Height ---
+  - id: BAR_FALL_PROTECTION
+    label: "Fall protection / harness anchored"
+    category: BC_PPE
+    applies_to: LSR_HEIGHT
+  - id: BAR_SCAFFOLD_INTEGRITY
+    label: "Scaffold / platform inspected and certified"
+    category: BC_ENGINEERING
+    applies_to: LSR_HEIGHT
+  - id: BAR_LADDER_SECURED
+    label: "Ladder footed, tied off, or otherwise secured"
+    category: BC_ENGINEERING
+    applies_to: LSR_HEIGHT
+  - id: BAR_EDGE_PROTECTION
+    label: "Guardrails / edge protection in place"
+    category: BC_ENGINEERING
+    applies_to: LSR_HEIGHT
+
+  # --- Lifting ---
+  - id: BAR_LIFT_PLAN
+    label: "Lift plan prepared and approved"
+    category: BC_PROCEDURAL
+    applies_to: LSR_LIFTING
+  - id: BAR_RIGGING_INSPECTED
+    label: "Rigging / slings / equipment inspected"
+    category: BC_ENGINEERING
+    applies_to: LSR_LIFTING
+  - id: BAR_LOAD_AREA_CLEARED
+    label: "Area under load barricaded and cleared"
+    category: BC_ENGINEERING
+    applies_to: LSR_LIFTING
+
+  # --- Line of Fire ---
+  - id: BAR_EXCLUSION_ZONE
+    label: "Exclusion zone / barricading established"
+    category: BC_ENGINEERING
+    applies_to: LSR_LINEOFFIRE
+  - id: BAR_POSITIONING
+    label: "Safe positioning away from moving/pressurised equipment"
+    category: BC_HUMAN
+    applies_to: LSR_LINEOFFIRE
+
+  # --- Bypassing Safety Controls ---
+  - id: BAR_SAFETY_DEVICE_ACTIVE
+    label: "Safety device / interlock / alarm functional and enabled"
+    category: BC_ENGINEERING
+    applies_to: LSR_BYPASS
+  - id: BAR_OVERRIDE_AUTHORISED
+    label: "Override formally authorised"
+    category: BC_PROCEDURAL
+    applies_to: LSR_BYPASS
+  - id: BAR_MACHINE_GUARD
+    label: "Machine guarding in place"
+    category: BC_ENGINEERING
+    applies_to: LSR_BYPASS
+
+  # --- Driving ---
+  - id: BAR_SEATBELT
+    label: "Seatbelt worn"
+    category: BC_PPE
+    applies_to: LSR_DRIVING
+  - id: BAR_JOURNEY_MANAGEMENT
+    label: "Journey management plan followed"
+    category: BC_PROCEDURAL
+    applies_to: LSR_DRIVING
+  - id: BAR_VEHICLE_FITNESS
+    label: "Vehicle inspected and roadworthy"
+    category: BC_ENGINEERING
+    applies_to: LSR_DRIVING
+
+  # --- Cross-cutting (lsr: null) ---
+  - id: BAR_PPE_GENERAL
+    label: "Task-appropriate PPE worn"
+    category: BC_PPE
+    applies_to: CROSS_CUTTING
+  - id: BAR_COMPETENCE
+    label: "Worker trained / competent / authorised for task"
+    category: BC_HUMAN
+    applies_to: CROSS_CUTTING
+  - id: BAR_SUPERVISION
+    label: "Adequate supervision present"
+    category: BC_HUMAN
+    applies_to: CROSS_CUTTING
+  - id: BAR_COMMUNICATION
+    label: "Handover / communication between parties"
+    category: BC_HUMAN
+    applies_to: CROSS_CUTTING
+  - id: BAR_EQUIPMENT_MAINTENANCE
+    label: "Equipment maintained / inspection current"
+    category: BC_ENGINEERING
+    applies_to: CROSS_CUTTING
+  - id: BAR_HOUSEKEEPING
+    label: "Housekeeping / access routes clear"
+    category: BC_ENGINEERING
+    applies_to: CROSS_CUTTING
+  - id: BAR_EQUIPMENT_SECURED
+    label: "Equipment secured / restrained in parked or stowed position"
+    category: BC_ENGINEERING
+    applies_to: CROSS_CUTTING
+  - id: BAR_MOC
+    label: "Management of change applied"
+    category: BC_PROCEDURAL
+    applies_to: CROSS_CUTTING
+
+# -----------------------------------------------------------------------------
+# 5. HAZARD / ENERGY SOURCE
+# -----------------------------------------------------------------------------
+# Based on the standard energy-source model used in industrial safety.
+# Answers: "what could actually cause the harm?"
+# -----------------------------------------------------------------------------
+hazards:
+  - id: HAZ_GRAVITY
+    label: "Gravity"
+    note: "Falls of person or object."
+  - id: HAZ_MOTION
+    label: "Motion"
+    note: "Vehicles, moving equipment, rotating machinery."
+  - id: HAZ_MECHANICAL
+    label: "Mechanical / stored mechanical"
+    note: "Springs, tensioned lines, suspended loads."
+  - id: HAZ_ELECTRICAL
+    label: "Electrical"
+  - id: HAZ_PRESSURE
+    label: "Pressure"
+    note: "Hydraulic, pneumatic, process pressure, trapped pressure."
+  - id: HAZ_CHEMICAL
+    label: "Chemical / toxic"
+    note: "H2S, corrosives, hydrocarbons, oxygen deficiency."
+  - id: HAZ_THERMAL
+    label: "Thermal / fire"
+    note: "Heat, flame, hot surfaces, cryogenic."
+  - id: HAZ_RADIATION
+    label: "Radiation"
+  - id: HAZ_BIOLOGICAL
+    label: "Biological"
+  - id: HAZ_ERGONOMIC
+    label: "Ergonomic / over-exertion"
+    note: "Manual handling, awkward posture, repetitive strain. Not an external energy source — recorded here so musculoskeletal events are not silently dropped."
+  - id: HAZ_SOUND
+    label: "Sound / vibration"
+
+# -----------------------------------------------------------------------------
+# 6. ACTIVITY
+# -----------------------------------------------------------------------------
+activities:
+  - id: ACT_DRILLING
+    label: "Drilling operations"
+  - id: ACT_WELL_INTERVENTION
+    label: "Well intervention / workover"
+  - id: ACT_PRODUCTION_OPS
+    label: "Production operations"
+  - id: ACT_MECH_MAINTENANCE
+    label: "Mechanical maintenance"
+  - id: ACT_ELEC_MAINTENANCE
+    label: "Electrical maintenance"
+  - id: ACT_INSTRUMENT_WORK
+    label: "Instrumentation work"
+  - id: ACT_PIPELINE_WORK
+    label: "Pipeline work"
+  - id: ACT_HOT_WORK
+    label: "Hot work (welding, cutting, grinding)"
+  - id: ACT_LIFTING
+    label: "Lifting and rigging"
+  - id: ACT_CONFINED_ENTRY
+    label: "Confined space entry"
+  - id: ACT_WORK_AT_HEIGHT
+    label: "Working at height"
+  - id: ACT_EXCAVATION
+    label: "Excavation / trenching"
+  - id: ACT_CHEMICAL_HANDLING
+    label: "Chemical handling / dosing"
+  - id: ACT_TANK_VESSEL_WORK
+    label: "Tank or vessel cleaning / entry prep"
+  - id: ACT_CONSTRUCTION
+    label: "Construction / civil work"
+  - id: ACT_TRANSPORT
+    label: "Transport / driving"
+  - id: ACT_WELL_TESTING
+    label: "Well testing"
+  - id: ACT_WELLHEAD_OPS
+    label: "Wellhead / Christmas-tree operations"
+  - id: ACT_WIRELINE
+    label: "Wireline / slickline operations"
+  - id: ACT_PRESSURE_TESTING
+    label: "Pressure testing"
+  - id: ACT_HC_TRANSFER
+    label: "Hydrocarbon transfer / loading / unloading"
+  - id: ACT_PLANT_OPERATION
+    label: "Plant or mobile equipment operation"
+  - id: ACT_INSPECTION
+    label: "Inspection / survey"
+  - id: ACT_HOUSEKEEPING
+    label: "Housekeeping / general site work"
+
+# -----------------------------------------------------------------------------
+# 7. EXPOSURE
+# -----------------------------------------------------------------------------
+# How a person was (or would be) in contact with the hazard.
+# -----------------------------------------------------------------------------
+exposures:
+  - id: EXP_DIRECT_CONTACT
+    label: "Direct contact with energy source"
+  - id: EXP_PROXIMITY
+    label: "In proximity / within hazard zone"
+  - id: EXP_LINE_OF_FIRE
+    label: "Positioned in line of fire"
+  - id: EXP_ELEVATED
+    label: "At elevation / unprotected edge"
+  - id: EXP_ENCLOSED
+    label: "Inside enclosed or confined space"
+  - id: EXP_IN_TRANSIT
+    label: "In a moving vehicle"
+  - id: EXP_BYSTANDER
+    label: "Bystander / third party in area"
+
+# -----------------------------------------------------------------------------
+# 8. POTENTIAL CONSEQUENCE
+# -----------------------------------------------------------------------------
+# The realistic worst credible outcome had the situation continued.
+# NOTE: this is POTENTIAL, not what actually happened. That distinction is the
+# whole point of SIF-precursor analysis.
+# -----------------------------------------------------------------------------
+consequences:
+  - id: CON_FATAL_FALL
+    label: "Fatal fall"
+  - id: CON_FALL_SAME_LEVEL
+    label: "Slip, trip, or fall at or near ground level"
+  - id: CON_STRUCK_BY
+    label: "Struck by object or equipment"
+  - id: CON_CAUGHT_BETWEEN
+    label: "Caught in / between / crushing"
+  - id: CON_ELECTROCUTION
+    label: "Electrocution"
+  - id: CON_ASPHYXIATION
+    label: "Asphyxiation / toxic exposure"
+  - id: CON_BURN
+    label: "Burn / thermal injury"
+  - id: CON_EXPLOSION
+    label: "Fire or explosion"
+  - id: CON_LOSS_OF_CONTAINMENT
+    label: "Loss of containment"
+  - id: CON_VEHICLE_COLLISION
+    label: "Vehicle collision"
+  - id: CON_DROWNING
+    label: "Drowning"
+
+# -----------------------------------------------------------------------------
+# 9. SEVERITY BAND
+# -----------------------------------------------------------------------------
+severity_bands:
+  - id: SEV_FATAL
+    label: "Potentially fatal"
+  - id: SEV_SERIOUS
+    label: "Potentially life-altering / permanent disability"
+  - id: SEV_MINOR
+    label: "Minor / recoverable injury"
+  - id: SEV_NO_HARM
+    label: "No realistic harm potential"
+
+# -----------------------------------------------------------------------------
+# 10. CONTEXT FLAGS
+# -----------------------------------------------------------------------------
+# These are NOT activities. They are conditions that can apply to any activity
+# and that independently raise fatal potential.
+#
+# SIMOPS is the clearest example: during simultaneous operations there are two
+# or more activities happening at once, so it cannot be a single activity value
+# without losing information. Modelling it as a flag lets a report record
+# BOTH activities AND the fact that they overlapped.
+#
+# These flags are high-value for cross-report pattern mining: "contractor +
+# night shift" recurring across sites is a systemic finding, not an incident.
+# -----------------------------------------------------------------------------
+context_flags:
+  - id: CTX_SIMOPS
+    label: "Simultaneous operations (SIMOPS)"
+    note: "Two or more activities in the same area at the same time."
+  - id: CTX_NIGHT_SHIFT
+    label: "Night shift / low light"
+  - id: CTX_CONTRACTOR
+    label: "Contractor or third-party personnel"
+  - id: CTX_SHUTDOWN
+    label: "Shutdown / turnaround / campaign work"
+  - id: CTX_ADVERSE_WEATHER
+    label: "Adverse weather (monsoon, flooding, high wind, extreme heat)"
+  - id: CTX_REMOTE_LOCATION
+    label: "Remote location / delayed emergency response"
+  - id: CTX_FIRST_TIME_TASK
+    label: "Non-routine or first-time task"
+
+# -----------------------------------------------------------------------------
+# 11. LOCATION LEVELS
+# -----------------------------------------------------------------------------
+# NOTE: this section defines the SHAPE of a location, not the values.
+# Location is the only OPEN vocabulary in this system — new wells and
+# installations appear over time. Values live in `locations.yaml`, which is a
+# registry, not a contract, and is intended to be replaced by OIL's real site
+# master when available.
+#
+# EVERY LEVEL IS OPTIONAL. If a report says only "occurred at Baghewala",
+# record field=... and leave the lower levels null. Do not invent depth.
+# Null here means "not stated", which is different from CROSS_CUTTING above.
+# -----------------------------------------------------------------------------
+location_levels:
+  - id: LOC_L1_REGION
+    level: 1
+    label: "Region / operating area"
+    example: "Assam operations, Rajasthan operations"
+  - id: LOC_L2_FIELD
+    level: 2
+    label: "Field"
+    example: "Baghewala, Dandewala"
+  - id: LOC_L3_INSTALLATION
+    level: 3
+    label: "Installation / facility"
+    example: "Oil collecting station, early production setup, pump station"
+  - id: LOC_L4_AREA
+    level: 4
+    label: "Area / unit / asset"
+    example: "Wellhead, separator area, tank farm, workshop"
+
+# Extraction contract for location:
+#   location_raw   -> the verbatim text span as written by the reporter (always)
+#   location_l1..4 -> resolved registry ids, or null where not stated/uncertain
+# location_raw is never discarded. If resolution fails, a human can still fix it
+# later and no information has been lost.

@@ -1,0 +1,127 @@
+# =============================================================================
+# Location Registry  v0.1  — PROVISIONAL
+# =============================================================================
+# THIS IS NOT OIL's OFFICIAL SITE HIERARCHY.
+#
+# Entries below are seeded from OIL's publicly available material purely so the
+# system has something to resolve against during development and demo. OIL's
+# real internal structure uses its own concepts (field headquarters, production
+# installations, wellhead setups, and others) and this file is expected to be
+# REPLACED WHOLESALE by their site master once available.
+#
+# The 4-level shape (region / field / installation / area) is a normalised
+# schema we chose, not a claim about how OIL organises itself. Any real
+# hierarchy can be mapped onto it.
+#
+# `aliases` exist because reporters write the same place many ways. Resolution
+# is fuzzy matching against label + aliases; on no confident match, the level
+# is left null and location_raw preserves what the reporter actually wrote.
+# =============================================================================
+
+version: "0.1"
+status: provisional
+source: "Publicly available OIL material. Unverified against internal records."
+
+locations:
+
+  # ---- Region level ----
+  - id: LOC_ASSAM
+    level: 1
+    parent: null
+    label: "Assam operations"
+    aliases: ["Assam", "Upper Assam", "North East operations"]
+    verified: false
+
+  - id: LOC_RAJASTHAN
+    level: 1
+    parent: null
+    label: "Rajasthan operations"
+    aliases: ["Rajasthan"]
+    verified: false
+
+  # ---- Field level ----
+  - id: LOC_WESTERN_FIELDS
+    level: 2
+    parent: LOC_ASSAM
+    label: "Western Fields"
+    aliases: ["Western Field", "WF"]
+    verified: false
+
+  - id: LOC_BAGHEWALA
+    level: 2
+    parent: LOC_RAJASTHAN
+    label: "Baghewala"
+    aliases: ["Baghewala field"]
+    verified: false
+
+  - id: LOC_DANDEWALA
+    level: 2
+    parent: LOC_RAJASTHAN
+    label: "Dandewala"
+    aliases: ["Dandewala field"]
+    verified: false
+
+  # ---- Installation level (generic types — placeholders until real names) ----
+  - id: LOC_OCS_GENERIC
+    level: 3
+    parent: null            # parent unknown until mapped to a specific field
+    label: "Oil Collecting Station"
+    aliases: ["OCS", "collecting station"]
+    verified: false
+
+  - id: LOC_EPS_GENERIC
+    level: 3
+    parent: null
+    label: "Early Production Setup"
+    aliases: ["EPS", "early production"]
+    verified: false
+
+  - id: LOC_WELLHEAD_SETUP
+    level: 3
+    parent: null
+    label: "Wellhead setup"
+    aliases: ["wellhead installation", "well site"]
+    verified: false
+
+  # ---- Area level (generic, reusable across installations) ----
+  - id: LOC_AREA_WELLHEAD
+    level: 4
+    parent: null
+    label: "Wellhead area"
+    aliases: ["wellhead", "christmas tree area"]
+    verified: false
+
+  - id: LOC_AREA_SEPARATOR
+    level: 4
+    parent: null
+    label: "Separator area"
+    aliases: ["separator", "separation unit"]
+    verified: false
+
+  - id: LOC_AREA_TANKFARM
+    level: 4
+    parent: null
+    label: "Tank farm"
+    aliases: ["tank area", "storage tanks"]
+    verified: false
+
+  - id: LOC_AREA_PUMPHOUSE
+    level: 4
+    parent: null
+    label: "Pump house"
+    aliases: ["pumping station", "pump station"]
+    verified: false
+
+  - id: LOC_AREA_WORKSHOP
+    level: 4
+    parent: null
+    label: "Workshop"
+    aliases: ["maintenance workshop", "garage"]
+    verified: false
+
+  - id: LOC_AREA_PIPELINE
+    level: 4
+    parent: null
+    label: "Pipeline section / right of way"
+    aliases: ["pipeline", "ROW", "trunk line"]
+    verified: false

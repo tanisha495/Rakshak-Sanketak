@@ -1,0 +1,85 @@
+import type { WorkerSafetyReport } from "@/types";
+
+export const mockReports: WorkerSafetyReport[] = [
+  {
+    id: "report-001",
+    trackingId: "SNK-A7K92",
+    description:
+      "Pump maintenance started before the team confirmed energy isolation.",
+    language: "english",
+    site: "Mathura (UP)",
+    areaOrEquipment: "Pump House 3 / Transfer Pump P-204",
+    submittedAt: "2026-09-10T09:15:00.000Z",
+    status: "under_review",
+    reportingMethod: "voice",
+    aiAnalysis: {
+      activity: "Pump maintenance",
+      hazard: "Stored energy",
+      exposure: "Worker interacting with equipment that may still be energized",
+      barrierFailure: "Energy isolation was not verified before work started",
+      potentialConsequence: "Serious injury from unexpected equipment start-up",
+      lifeSavingRules: ["Energy Isolation"],
+    },
+  },
+  {
+    id: "report-002",
+    trackingId: "SNK-B4M18",
+    description:
+      "Excavation area near the walkway did not have a proper barricade.",
+    language: "english",
+    site: "Barauni (Bihar)",
+    areaOrEquipment: "Access Road / Excavation Zone E-12",
+    submittedAt: "2026-09-09T14:40:00.000Z",
+    status: "actioned",
+    reportingMethod: "text",
+    aiAnalysis: {
+      activity: "Walking near excavation",
+      hazard: "Open excavation",
+      exposure: "Workers and vehicles passing close to an unprotected edge",
+      barrierFailure: "Barricade was missing at the excavation boundary",
+      potentialConsequence: "Fall into excavation or vehicle entry into unsafe area",
+      lifeSavingRules: ["Line of Fire", "Work Authorization"],
+    },
+  },
+  {
+    id: "report-003",
+    trackingId: "SNK-C9Q51",
+    description:
+      "Gas smell noticed near the separator area during the morning round.",
+    language: "mixed",
+    site: "Digboi (Assam)",
+    areaOrEquipment: "Separator Unit S-11",
+    submittedAt: "2026-09-11T06:30:00.000Z",
+    status: "submitted",
+    reportingMethod: "voice",
+    aiAnalysis: {
+      activity: "Routine site inspection",
+      hazard: "Possible hydrocarbon gas release",
+      exposure: "Workers present near process equipment",
+      barrierFailure: "Potential leak not yet isolated or confirmed",
+      potentialConsequence: "Fire, explosion, or toxic exposure if gas accumulates",
+      lifeSavingRules: ["Bypassing Safety Controls", "Hot Work"],
+    },
+  },
+  {
+    id: "report-004",
+    trackingId: "SNK-D2V73",
+    description:
+      "Valve handle was damaged and difficult to operate on the water injection line.",
+    language: "english",
+    site: "Panipat (Haryana)",
+    areaOrEquipment: "Water Injection Line / Valve V-17",
+    submittedAt: "2026-09-07T11:05:00.000Z",
+    status: "verified",
+    reportingMethod: "photo",
+    photoUri: "mock://damaged-valve-photo",
+    aiAnalysis: {
+      activity: "Valve operation",
+      hazard: "Damaged process equipment",
+      exposure: "Worker operating a defective valve under field conditions",
+      barrierFailure: "Damaged valve was still available for routine use",
+      potentialConsequence: "Loss of control during isolation or emergency response",
+      lifeSavingRules: ["Energy Isolation"],
+    },
+  },
+];

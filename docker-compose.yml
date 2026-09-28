@@ -1,0 +1,53 @@
+version: "3.9"
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: sanketak
+      POSTGRES_PASSWORD: sanketak
+      POSTGRES_DB: sanketak
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://sanketak:sanketak@db:5432/sanketak
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app/app
+      - ./nlp:/app/nlp
+      - ./intelligence:/app/intelligence
+      # alembic/ must be mounted, not only baked into the image at build
+      # time. Without it, a migration written on the host never reaches the
+      # container: entrypoint.sh runs `alembic upgrade head` against the
+      # image's copy, so the new revision is invisible until a rebuild, and a
+      # revision created inside the container exists nowhere else. That is
+      # how b1c2d3e4f5a6 (add source to reports) came to live only in the
+      # image and was nearly lost when the working tree was recreated.
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
+      # The seed scripts are not COPYed by the Dockerfile, so the invocation
+      # in their own docstrings -- `docker compose exec api python
+      # seed_reports_from_predictions.py` -- could not find them. Mounted so
+      # the documented command works and edits take effect without a rebuild.
+      - ./seed_reports_from_predictions.py:/app/seed_reports_from_predictions.py
+      - ./seed_demo_data.py:/app/seed_demo_data.py
+      - ./seed_precedents.py:/app/seed_precedents.py
+      # Narratives the predictions seeder joins fingerprints against.
+      # Read-only: nothing in the container should write to it.
+      - ./output:/app/output:ro
+      # Served by the API at /dashboard/, so the HSE dashboard needs no
+      # separate web server or editor plugin. Read-only: the container
+      # only ever serves these files.
+      - ./dashboard:/app/dashboard:ro
+
+volumes:
+  pgdata:

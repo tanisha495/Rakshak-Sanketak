@@ -1,0 +1,29 @@
+﻿venv/
+__pycache__/
+*.pyc
+.env
+*.db
+.vscode/
+.DS_Store
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+data/
+.pytest_cache/
+nlp/data/
+.env
+
+# Added before the working_ver commit: these were not covered.
+node_modules/
+.expo/
+.env.*
+# ...but the template must be committed, or a fresh clone cannot start.
+!.env.example
+
+# The bare `data/` rule above is aimed at the Python data directories, but it
+# matches any directory called data at any depth -- including the app's
+# mobile/src/data/, whose three source files were silently left out of a
+# commit until a clone test caught it. Re-included explicitly.
+!mobile/src/data/
