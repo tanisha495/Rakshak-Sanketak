@@ -134,7 +134,7 @@ Things that are broken or fake. Read before demoing.
 | **Status values are unvalidated** | `PATCH /reports/{id}/status` accepts any string and returns 200. |
 | **`npm ci` fails in `mobile/`** | Pre-existing `react` / `react-dom` peer conflict. Use `npm install --legacy-peer-deps`. |
 | **CORS is `allow_origins=["*"]` with credentials** | Invalid per spec and wrong for an authenticated API. Fine locally, not for deployment. |
-| **Voice transcription still uses Supabase** | `EXPO_PUBLIC_USE_MOCK_VOICE_API=true` in `mobile/.env` avoids it. Text reports never touch Supabase. |
+| **Voice reports need a backend key** | Transcription is Whisper via `POST /voice-report`, so the backend `.env` needs a real `OPENAI_API_KEY`. Without one the endpoint returns 503 and the app shows its processing error. |
 
 ---
 
