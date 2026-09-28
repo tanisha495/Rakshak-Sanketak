@@ -522,7 +522,7 @@ window.SanketakTime = (function () {
             // Not captured by the backend: there is no channel/audio/photo
             // field on a report.
             reportingMethod: NOT_RECORDED,
-            reportLanguage: String(row.language || NOT_AVAILABLE),
+            reportLanguage: languageName(row.language),
             detectedLanguage: String(fingerprint.language || row.language || ""),
             site: String(row.site_tag || NOT_RECORDED),
             // Not captured by the backend. equipment_tag exists but is
@@ -1110,6 +1110,28 @@ window.SanketakTime = (function () {
         }
 
         return label(failure.barrier) + " - " + label(failure.failure_mode);
+    }
+
+    // The backend stores an ISO code; an HSE officer reads a language name.
+    // Whisper sometimes reports the name already, so both forms are accepted
+    // and anything unrecognised is shown as it was stored rather than guessed.
+    function languageName(value) {
+        const raw = String(value || "").trim().toLowerCase();
+
+        if (!raw) {
+            return NOT_AVAILABLE;
+        }
+
+        const names = {
+            as: "Assamese",
+            assamese: "Assamese",
+            en: "English",
+            english: "English",
+            hi: "Hindi",
+            hindi: "Hindi",
+        };
+
+        return names[raw] || String(value);
     }
 
     // Tables and cards expect a short description; the backend stores only
