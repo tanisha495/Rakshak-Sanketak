@@ -19,6 +19,7 @@ import {
 } from "@/i18n/report-analysis";
 import { useLanguage } from "@/i18n/use-language";
 import {
+  fetchRemoteReportStatus,
   getReportById,
   getReportStatus,
   syncPendingReports,
@@ -54,10 +55,34 @@ export function ReportDetailsScreen() {
     setLoading(true);
 
     Promise.all([getReportById(id), getReportStatus(id)])
-      .then(([reportResult, statusResult]) => {
+      .then(async ([reportResult, statusResult]) => {
         if (mounted) {
           setReport(reportResult);
           setSteps(statusResult?.steps ?? []);
+        }
+
+        // The stored copy is a snapshot taken at submission, so an HSE
+        // officer moving the report on never reaches the worker on its own.
+        // Read the backend's status whenever the screen opens and store it,
+        // which also keeps it visible the next time the worker is offline.
+        const remoteReportId = reportResult?.remoteReportId;
+
+        if (!remoteReportId) {
+          return;
+        }
+
+        const remoteStatus = await fetchRemoteReportStatus(remoteReportId);
+
+        if (!remoteStatus || remoteStatus === reportResult?.status) {
+          return;
+        }
+
+        const syncedReport = await updateReportStatus(id, remoteStatus);
+        const syncedStatus = await getReportStatus(id);
+
+        if (mounted) {
+          setReport(syncedReport);
+          setSteps(syncedStatus?.steps ?? []);
         }
       })
       .finally(() => {
