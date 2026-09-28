@@ -382,7 +382,7 @@
                 <div class="score-grid">
                     ${scoreCard("Priority", cap(report.priority), report.priority)}
                     ${scoreCard("SIF Potential", cap(report.sifPotential), report.sifPotential)}
-                    ${scoreCard("Model Confidence", confidenceLabel(report.modelConfidence), "info")}
+                    ${scoreCard("Model Risk Score", confidenceLabel(report.modelConfidence), "info")}
                 </div>
             </section>
 
