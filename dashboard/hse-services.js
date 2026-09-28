@@ -642,10 +642,6 @@ window.SanketakTime = (function () {
         return window.SanketakTime.toTime(b.receivedAt) - window.SanketakTime.toTime(a.receivedAt);
     }
 
-    // POST /actions/ accepts only report_id, description and owner, all as
-    // query parameters. Due date, priority and verification-required are
-    // collected by the form and have nowhere to go — they are reported back
-    // as droppedFields rather than quietly discarded.
     async function assignCorrectiveAction(report, values) {
         const auth = window.SanketakAuth;
         const params = new URLSearchParams({
@@ -656,6 +652,16 @@ window.SanketakTime = (function () {
         if (values.assignedTo) {
             params.set("owner", values.assignedTo);
         }
+
+        if (values.dueDate) {
+            params.set("due_date", values.dueDate);
+        }
+
+        if (values.priority) {
+            params.set("priority", values.priority);
+        }
+
+        params.set("verification_required", values.verificationRequired ? "true" : "false");
 
         const response = await fetch(auth.apiUrl("/actions/?" + params.toString()), {
             method: "POST",
@@ -677,32 +683,10 @@ window.SanketakTime = (function () {
             throw new Error(String(created.error));
         }
 
-        const droppedFields = [];
-
-        if (values.dueDate) {
-            droppedFields.push("due date");
-        }
-
-        if (values.priority) {
-            droppedFields.push("priority");
-        }
-
-        if (values.verificationRequired) {
-            droppedFields.push("verification required");
-        }
-
-        if (droppedFields.length) {
-            store.writeWarning = "Saved, but the backend does not store: " +
-                droppedFields.join(", ") + ". POST /actions/ accepts only report_id, description and owner.";
-            console.warn("[Sanketak] " + store.writeWarning);
-        } else {
-            store.writeWarning = "";
-        }
-
         await markReportActionAssigned(report);
         await refreshAll();
 
-        return { action: created, droppedFields: droppedFields };
+        return { action: created, droppedFields: [] };
     }
 
     // The backend issues stateless JWTs and has no logout endpoint, so

@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.routers import reports, risk_radar, patterns, precedents, actions, auth, analyse, dashboard, intelligence
+from app.routers import reports, risk_radar, patterns, precedents, actions, auth, analyse, dashboard, intelligence, voice
 
 app = FastAPI(
     title="Sanketak API",
@@ -31,6 +31,7 @@ app.include_router(auth.router)
 app.include_router(analyse.router)
 app.include_router(dashboard.router)
 app.include_router(intelligence.router)
+app.include_router(voice.router)
 
 # Serve the HSE dashboard from the API itself, at http://localhost:8000/dashboard/
 #

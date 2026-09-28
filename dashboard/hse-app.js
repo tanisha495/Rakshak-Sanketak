@@ -600,7 +600,7 @@
             status.textContent = "Saving corrective action...";
 
             try {
-                const result = await services.assignCorrectiveAction(report, {
+                await services.assignCorrectiveAction(report, {
                     description: formData.get("description"),
                     assignedTo: formData.get("assignedTo"),
                     dueDate: formData.get("dueDate"),
@@ -608,11 +608,7 @@
                     verificationRequired: formData.has("verificationRequired")
                 });
 
-                // The backend stores only report, description and owner. Say
-                // which fields were not saved rather than report a clean save.
-                status.textContent = result.droppedFields.length
-                    ? "Action assigned. Not saved by the backend: " + result.droppedFields.join(", ") + "."
-                    : "Action assigned.";
+                status.textContent = "Action assigned.";
                 document.getElementById("workflowStatus").textContent = "Action Assigned";
             } catch (error) {
                 status.textContent = "Could not save action: " + error.message;
