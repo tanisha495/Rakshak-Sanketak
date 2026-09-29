@@ -2,6 +2,7 @@ import * as FileSystem from "expo-file-system/legacy";
 
 import type { AppLanguage } from "@/i18n";
 import type { ReportAnalysis } from "@/report-draft";
+import { analysisService } from "@/services/analysis-service";
 import {
   getSupabaseFunctionUrl,
   getSupabasePublishableKey,
@@ -38,6 +39,10 @@ export async function processVoiceReport(
     throw new Error("Audio URI is required.");
   }
 
+  if (process.env.EXPO_PUBLIC_USE_MOCK_VOICE_API === "true") {
+    return processMockVoiceReport(audioUri, language);
+  }
+
   // The FastAPI backend owns transcription. Supabase is the legacy path and is
   // used only when no backend URL is configured.
   if (!process.env.EXPO_PUBLIC_API_BASE_URL?.trim() && isSupabaseConfigured()) {
@@ -50,19 +55,23 @@ export async function processVoiceReport(
   // Uploaded natively rather than with fetch + FormData: React Native's new
   // architecture rejects the { uri, name, type } part cast with "Unsupported
   // FormDataPart implementation".
-  const response = await FileSystem.uploadAsync(
-    `${apiBaseUrl}${voiceReportPath}`,
-    audioUri,
-    {
-      fieldName: "audio",
-      headers: {
-        Accept: "application/json",
+  const response = await withTimeout(
+    FileSystem.uploadAsync(
+      `${apiBaseUrl}${voiceReportPath}`,
+      audioUri,
+      {
+        fieldName: "audio",
+        headers: {
+          Accept: "application/json",
+        },
+        httpMethod: "POST",
+        mimeType: getAudioMimeType(extension),
+        parameters: { language },
+        uploadType: FileSystem.FileSystemUploadType.MULTIPART,
       },
-      httpMethod: "POST",
-      mimeType: getAudioMimeType(extension),
-      parameters: { language },
-      uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-    },
+    ),
+    requestTimeoutMs,
+    "Voice report backend did not respond in time.",
   );
 
   if (response.status < 200 || response.status >= 300) {
@@ -80,6 +89,28 @@ export async function processVoiceReport(
   }
 
   return mapVoiceReportResponse(payload);
+}
+
+async function processMockVoiceReport(
+  audioUri: string,
+  language: AppLanguage,
+): Promise<VoiceReportResponse> {
+  const transcript =
+    language === "hi"
+      ? "साइट पर क्रेन से भारी प्लेट उठाई जा रही थी। एक स्लिंग ढीली थी और दो मजदूर प्लेट के नीचे खड़े थे। वहां कोई बैरिकेड नहीं लगा था।"
+      : "A crane was lifting a heavy steel plate. One sling was loose and two workers were standing below the suspended load. There was no barricade around the lifting area.";
+  const analysis = await analysisService.analyseReport({
+    audioUri,
+    description: transcript,
+    reportLanguage: language,
+    reportingMethod: "voice",
+  });
+
+  return {
+    analysis,
+    detectedLanguage: language,
+    transcript,
+  };
 }
 
 async function processSupabaseVoiceReport(
@@ -246,4 +277,19 @@ function getBackendErrorMessage(
   }
 
   return `Supabase voice report request failed with ${status}.`;
+}
+
+function withTimeout<T>(
+  promise: Promise<T>,
+  durationMs: number,
+  message: string,
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error(message)), durationMs);
+
+    promise
+      .then(resolve)
+      .catch(reject)
+      .finally(() => clearTimeout(timeout));
+  });
 }
