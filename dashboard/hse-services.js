@@ -530,9 +530,11 @@ window.SanketakTime = (function () {
             area: NOT_RECORDED,
             receivedAt: row.submitted_at || "",
             status: normalizeStatus(row.status),
-            // Not captured by the backend. risk_level drives sifPotential
-            // below; inventing a priority from it would be a guess.
-            priority: "not_set",
+            // Not captured by the backend: a report carries no officer-set
+            // priority. Derived from the model's own output instead, so the
+            // column ranks the queue rather than reading "Not Set" on every
+            // row. See derivePriority for the mapping.
+            priority: derivePriority(row.risk_level, row.sif_probability),
             sifPotential: normalizeSif(row.risk_level),
             modelConfidence: normalizeConfidence(row.sif_probability),
             analysis: {
@@ -571,10 +573,9 @@ window.SanketakTime = (function () {
             description: String(row.description || NOT_AVAILABLE),
             assignedTo: String(row.owner || "Not assigned"),
             dueDate: row.due_date || "",
-            // Not stored on the backend's corrective_actions table.
-            priority: "not_set",
+            priority: normalizePriority(row.priority),
             status: normalizeActionStatus(row.status),
-            verificationRequired: false,
+            verificationRequired: Boolean(row.verification_required),
             // Joined from the linked report; the action row has neither.
             site: report.site || NOT_RECORDED,
             area: report.area || NOT_RECORDED,
@@ -895,12 +896,65 @@ window.SanketakTime = (function () {
         return "not_set";
     }
 
+    // A report has no priority field of its own, so one is derived from the
+    // model's risk_level, with sif_probability splitting the HIGH band: a
+    // 0.92 and a 0.71 are both HIGH, but only the first warrants pulling an
+    // officer off whatever they are doing. Derived, never stored — if a
+    // report is rescored, its priority follows.
+    const CRITICAL_PROBABILITY = 0.85;
+
+    function derivePriority(riskLevel, sifProbability) {
+        const level = normalizeSif(riskLevel);
+        const probability = normalizeConfidence(sifProbability);
+
+        if (level === "high") {
+            return probability !== null && probability >= CRITICAL_PROBABILITY
+                ? "critical"
+                : "high";
+        }
+
+        if (level === "medium") {
+            return "medium";
+        }
+
+        if (level === "low") {
+            return "low";
+        }
+
+        // No risk_level at all (an unscored report). The probability alone
+        // still ranks it if one is present; otherwise the column stays
+        // honest and says nothing.
+        if (probability === null) {
+            return "not_set";
+        }
+
+        if (probability >= CRITICAL_PROBABILITY) {
+            return "critical";
+        }
+
+        if (probability >= 0.7) {
+            return "high";
+        }
+
+        if (probability >= 0.5) {
+            return "medium";
+        }
+
+        return "low";
+    }
+
     function normalizeTrend(value) {
         const normalized = normalizeToken(value);
         return normalized.includes("increasing") || normalized.includes("up") ? "Increasing" : "Stable";
     }
 
     function normalizeConfidence(value) {
+        // Number(null) and Number("") are both 0, which would read as a
+        // genuine score of zero rather than the absent value it is.
+        if (value === null || value === undefined || value === "") {
+            return null;
+        }
+
         const number = Number(value);
 
         if (Number.isNaN(number)) {
